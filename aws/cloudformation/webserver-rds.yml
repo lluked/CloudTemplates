@@ -1,4 +1,5 @@
 Description: Template created for https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/TUT_WebAppWithRDS.html
+
 Parameters:
 
   EnvironmentName:
@@ -529,6 +530,7 @@ Resources:
           Value: !Sub '${EnvironmentName} Database Instance'
 
 Outputs:
+
   VPC:
     Description: A reference to the created VPC
     Value: !Ref VPC
