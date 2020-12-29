@@ -1,4 +1,4 @@
-Description: LAMP Stack. Amazon Linux, httpd, mysql 8.0 rds db, php 7.3. Includes AWS CloudFormation PHP Sample index.php page.
+Description: LAMP Stack. amzn2-ami-hvm-x86_64-gp2, httpd, mysql 8.0 rds db, php 7.3. Includes AWS CloudFormation PHP Sample index.php page.
 
 Parameters:
 
