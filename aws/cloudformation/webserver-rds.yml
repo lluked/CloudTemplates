@@ -1,39 +1,39 @@
-Description: Template created for https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/TUT_WebAppWithRDS.html
+Description: LAMP Stack. Amazon Linux, httpd, mysql 8.0 rds db, php 7.3. Includes AWS CloudFormation PHP Sample index.php page.
 
 Parameters:
 
   EnvironmentName:
-    Description: An environment name that is prefixed to resource names
+    Description: An environment name that is prefixed to resource names.
     Type: String
-    Default: Sample Project
+    Default: LAMP
 
   VPCCIDR:
-    Description: Please enter the IP range (CIDR notation) for this VPC
+    Description: Please enter the IP range (CIDR notation) for this VPC.
     Type: String
     Default: 10.0.0.0/16
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
 
   PublicSubnetCIDR:
-    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone.
     Type: String
     Default: 10.0.10.0/24
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
 
   PrivateSubnet1CIDR:
-    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone.
     Type: String
     Default: 10.0.20.0/24
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
 
   PrivateSubnet2CIDR:
-    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Description: Please enter the IP range (CIDR notation) for the private subnet in the first Availability Zone.
     Type: String
     Default: 10.0.21.0/24
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
 
   KeyName:
     Description: Please enter the name of an existing EC2 key pair for SSH access to the EC2 instance.
@@ -43,16 +43,20 @@ Parameters:
     Description: Please enter the IP range (CIDR notation) for remote access to the EC2 instance.
     Type: String
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
+
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 
   WebServerInstanceType:
-    Description: Please enter the EC2 instance type
+    Description: Please enter the EC2 instance type.
     Type: String
     ConstraintDescription: Must select a valid instance type.
     Default: t2.nano
 
   DBInstanceID:
-    Description: Please enter the instance id
+    Description: Please enter the instance id.
     Type: String
     MinLength: '1'
     MaxLength: '63'
@@ -63,7 +67,7 @@ Parameters:
     Default: mydbinstance
 
   DBName:
-    Description: Please enter the database name
+    Description: Please enter the database name.
     Type: String
     MinLength: '1'
     MaxLength: '64'
@@ -72,13 +76,13 @@ Parameters:
     Default: mydb
 
   DBInstanceClass:
-    Description: Please enter the DB instance class
+    Description: Please enter the DB instance class.
     Type: String
     ConstraintDescription: Must select a valid DB instance type.
     Default: db.t2.micro
 
   DBAllocatedStorage:
-    Description: Please enter the the size of the database (GiB)
+    Description: Please enter the the size of the database (GiB).
     Type: Number
     MinValue: '5'
     MaxValue: '1024'
@@ -86,7 +90,7 @@ Parameters:
     Default: '5'
 
   DBUsername:
-    Description: Please enter the username for MySQL database access
+    Description: Please enter the username for MySQL database access.
     Type: String
     MinLength: '1'
     MaxLength: '16'
@@ -96,50 +100,12 @@ Parameters:
 
   DBPassword:
     NoEcho: 'true'
-    Description: Please enter the password MySQL database access
+    Description: Please enter the password for MySQL database access.
     Type: String
     MinLength: '8'
     MaxLength: '41'
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
-
-Mappings:
-
-  AWSInstanceType2Arch:
-    t1.micro:
-      Arch: HVM64
-    t2.nano:
-      Arch: HVM64
-    t2.micro:
-      Arch: HVM64
-    t2.small:
-      Arch: HVM64
-    t2.medium:
-      Arch: HVM64
-    t2.large:
-      Arch: HVM64
-
-  AWSRegionArch2AMI:
-    eu-central-1:
-      HVM64: ami-0474863011a7d1541
-    eu-north-1:
-      HVM64: ami-0de4b8910494dba0f
-    eu-south-1:
-      HVM64: ami-08427144fe9ebdef6
-    eu-west-1:
-      HVM64: ami-015232c01a82b847b
-    eu-west-2:
-      HVM64: ami-0765d48d7e15beb93
-    eu-west-3:
-      HVM64: ami-0caf07637eda19d9c
-    us-east-1:
-      HVM64: ami-032930428bf1abbff
-    us-east-2:
-      HVM64: ami-027cab9a7bf0155df
-    us-west-1:
-      HVM64: ami-088c153f74339f34c
-    us-west-2:
-      HVM64: ami-01fee56b22f308154
 
 Resources:
 
@@ -242,7 +208,7 @@ Resources:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupName: web-server-ingress-sg
-      GroupDescription: Security group for web server ingress
+      GroupDescription: Security group for web server ingress.
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -261,13 +227,21 @@ Resources:
     Type: 'AWS::EC2::Instance'
     Metadata:
       'AWS::CloudFormation::Init':
-        config:
+        configSets:
+          setup:
+            - prepare
+            - install
+        prepare:
+          commands:
+            ale_php73:
+              command: "amazon-linux-extras enable php7.3"
+              cwd: "~"
+        install:
           packages:
             yum:
               httpd: []
-              mysql: []
               php: []
-              php-mysql: []
+              php-mysqlnd: []
           files:
             /var/www/html/index.php:
               content: !Join 
@@ -356,7 +330,7 @@ Resources:
                           }
                   - '      $Database     = "'
                   - !GetAtt 
-                    - DBInstance
+                    - PrivateDBInstance
                     - Endpoint.Address
                   - |
                     ";
@@ -371,13 +345,13 @@ Resources:
                   - |2
                           print "Database = " . $Database . "<br />";
                   - |2
-                          $dbconnection = mysql_connect($Database, $DBUser, $DBPassword)
+                          $dbconnection = mysqli_connect($Database, $DBUser, $DBPassword)
                   - |2
                                           or die("Could not connect: " . mysql_error());
                   - |2
                           print ("Connected to $Database successfully");
                   - |2
-                          mysql_close($dbconnection);
+                          mysqli_close($dbconnection);
                   - |2
                         ?>
                   - |2
@@ -447,13 +421,7 @@ Resources:
                   - /etc/cfn/cfn-hup.conf
                   - /etc/cfn/hooks.d/cfn-auto-reloader.conf
     Properties:
-      ImageId: !FindInMap 
-        - AWSRegionArch2AMI
-        - !Ref 'AWS::Region'
-        - !FindInMap 
-          - AWSInstanceType2Arch
-          - !Ref WebServerInstanceType
-          - Arch
+      ImageId: !Ref LatestAmiId
       InstanceType: !Ref WebServerInstanceType
       SubnetId: !Ref PublicSubnet
       KeyName: !Ref KeyName
@@ -470,6 +438,7 @@ Resources:
             - '         --stack '
             - !Ref 'AWS::StackName'
             - '         --resource PublicWebServerInstance '
+            - '         --configsets setup '
             - '         --region '
             - !Ref 'AWS::Region'
             - |+
@@ -491,13 +460,13 @@ Resources:
           Value: !Sub '${EnvironmentName} Public Web Server'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT15M
+        Timeout: PT5M
 
   PrivateDBSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupName: database-sg
-      GroupDescription: Security group for db access
+      GroupDescription: Security group for db access.
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -508,62 +477,79 @@ Resources:
         - Key: Name
           Value: !Sub '${EnvironmentName} Private Database Security Group'
 
-  DBInstance:
+  PrivateDBInstance:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       AllocatedStorage: !Ref DBAllocatedStorage
-      DBInstanceIdentifier: !Ref DBInstanceID
+      DBInstanceIdentifier: !Join 
+        - '-'
+        - - !Ref DBInstanceID
+          - !Select
+            - 0
+            - !Split
+              - "-"
+              - !Select
+                - 2
+                - !Split
+                  - "/"
+                  - !Ref "AWS::StackId"
       DBName: !Ref DBName
       DBSubnetGroupName: !Ref DBSubnetGroup
       DBInstanceClass: !Ref DBInstanceClass
       Engine: MySQL
-      EngineVersion: 5.6
+      EngineVersion: 8.0
       MasterUsername: !Ref DBUsername
       MasterUserPassword: !Ref DBPassword
-#      MonitoringInterval: '60'
-#      MonitoringRoleArn: 'arn:aws:iam::123456789012:role/rds-monitoring-role'
       PubliclyAccessible: no
       VPCSecurityGroups:
        - !Ref PrivateDBSecurityGroup  
-      Tags: 
+      Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Database Instance'
+          Value: !Sub '${EnvironmentName} Private Database Instance'
 
 Outputs:
 
   VPC:
-    Description: A reference to the created VPC
+    Description: A reference to the created VPC.
     Value: !Ref VPC
 
   PublicSubnet:
-    Description: A reference to the public subnet in the 1st Availability Zone
+    Description: A reference to the public subnet in the 1st Availability Zone.
     Value: !Ref PublicSubnet
 
   PrivateSubnet1:
-    Description: A reference to the private subnet in the 1st Availability Zone
+    Description: A reference to the private subnet in the 1st Availability Zone.
     Value: !Ref PrivateSubnet1
 
   PrivateSubnet2:
-    Description: A reference to the private subnet in the 2nd Availability Zone
+    Description: A reference to the private subnet in the 2nd Availability Zone.
     Value: !Ref PrivateSubnet2
 
   PublicWebServerSecurityGroup:
-    Description: Security group for webserver
+    Description: Security group for webserver.
     Value: !Ref PublicWebServerSecurityGroup
 
   PrivateDBSecurityGroup:
-    Description: Security group for db
+    Description: Security group for db.
     Value: !Ref PrivateDBSecurityGroup
 
   DBInstanceId:
-    Description: InstanceId of the newly created RDS Instance
+    Description: InstanceId of the newly created RDS Instance.
     Value: !Ref DBInstanceID
 
   WebsiteURL:
-    Description: URL for newly created LAMP stack
+    Description: URL for newly created webserver.
     Value: !Join 
       - ''
       - - 'http://'
         - !GetAtt 
           - PublicWebServerInstance
           - PublicDnsName
+
+  PrivateDBAddress:
+    Description: Address for newly created db endpoint.
+    Value: !Join 
+      - ''
+      - - !GetAtt 
+          - PrivateDBInstance
+          - Endpoint.Address
