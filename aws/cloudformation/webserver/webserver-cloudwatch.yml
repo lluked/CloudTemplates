@@ -155,9 +155,11 @@ Resources:
             - restart-cloudwatch-agent
             - amazon-linux-extras
             - install-frontend
+            - install-site
           update:
             - configure-cloudwatch-agent
             - restart-cloudwatch-agent
+            - install-site
         configure-cfn-hup:
           files:
             /etc/cfn/cfn-hup.conf:
@@ -357,6 +359,7 @@ Resources:
             yum:
               httpd: []
               php: []
+        install-site:
           files:
             /var/www/html/index.php:
               content: !Join 
