@@ -101,7 +101,7 @@ Resources:
         - Key: Name
           Value: !Sub '${EnvironmentName} Public Subnet'
 
-  PublicWebServerSecurityGroup:
+  WebServerPublicSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupName: web-server-ingress-sg
@@ -120,7 +120,7 @@ Resources:
         - Key: Name
           Value: !Sub '${EnvironmentName} Public Web Server Security Group'
 
-  PublicWebServerInstance:
+  WebServerInstance:
     Type: 'AWS::EC2::Instance'
     Metadata:
       'AWS::CloudFormation::Init':
@@ -159,11 +159,11 @@ Resources:
                   - |
                     triggers=post.update
                   - >
-                    path=Resources.PublicWebServerInstance.Metadata.AWS::CloudFormation::Init
+                    path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
                   - 'action=/opt/aws/bin/cfn-init -v '
                   - '         --stack '
                   - !Ref 'AWS::StackName'
-                  - '         --resource PublicWebServerInstance '
+                  - '         --resource WebServerInstance '
                   - '         --configsets update '
                   - '         --region '
                   - !Ref 'AWS::Region'
@@ -319,7 +319,7 @@ Resources:
             - '/opt/aws/bin/cfn-init -v '
             - '         --stack '
             - !Ref 'AWS::StackName'
-            - '         --resource PublicWebServerInstance '
+            - '         --resource WebServerInstance '
             - '         --configsets setup '
             - '         --region '
             - !Ref 'AWS::Region'
@@ -330,13 +330,13 @@ Resources:
             - '/opt/aws/bin/cfn-signal -e $? '
             - '         --stack '
             - !Ref 'AWS::StackName'
-            - '         --resource PublicWebServerInstance '
+            - '         --resource WebServerInstance '
             - '         --region '
             - !Ref 'AWS::Region'
             - |+
 
       SecurityGroupIds:
-        - !Ref PublicWebServerSecurityGroup
+        - !Ref WebServerPublicSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub '${EnvironmentName} Public Web Server'
@@ -354,9 +354,9 @@ Outputs:
     Description: A reference to the public subnet in the 1st Availability Zone.
     Value: !Ref PublicSubnet
 
-  PublicWebServerSecurityGroup:
+  WebServerPublicSecurityGroup:
     Description: Security group for webserver.
-    Value: !Ref PublicWebServerSecurityGroup
+    Value: !Ref WebServerPublicSecurityGroup
 
   WebsiteURL:
     Description: URL for newly created webserver.
@@ -364,5 +364,5 @@ Outputs:
       - ''
       - - 'http://'
         - !GetAtt 
-          - PublicWebServerInstance
+          - WebServerInstance
           - PublicDnsName
