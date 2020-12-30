@@ -129,8 +129,9 @@ Resources:
             - configure-cfn-hup
             - amazon-linux-extras
             - install-frontend
+            - install-site
           update:
-            - install-frontend
+            - install-site
         configure-cfn-hup:
           files:
             /etc/cfn/cfn-hup.conf:
@@ -190,6 +191,7 @@ Resources:
             yum:
               httpd: []
               php: []
+        install-site:
           files:
             /var/www/html/index.php:
               content: !Join 
