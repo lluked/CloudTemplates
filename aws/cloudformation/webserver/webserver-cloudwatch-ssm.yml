@@ -302,9 +302,11 @@ Resources:
             - restart-cloudwatch-agent
             - amazon-linux-extras
             - install-frontend
+            - install-site
           update:
             - configure-cloudwatch-agent
             - restart-cloudwatch-agent
+            - install-site
         configure-cfn-hup:
           files:
             /etc/cfn/cfn-hup.conf:
@@ -315,9 +317,11 @@ Resources:
                   - stack=
                   - !Ref 'AWS::StackId'
                   - |+
+
                   - region=
                   - !Ref 'AWS::Region'
                   - |+
+
               mode: '000400'
               owner: root
               group: root
@@ -338,6 +342,7 @@ Resources:
                   - '         --region '
                   - !Ref 'AWS::Region'
                   - |+
+
                   - |
                     runas=root
               mode: '000400'
@@ -381,6 +386,7 @@ Resources:
             yum:
               httpd: []
               php: []
+        install-site:
           files:
             /var/www/html/index.php:
               content: !Join 
@@ -514,6 +520,7 @@ Resources:
             - '         --region '
             - !Ref 'AWS::Region'
             - |+
+
             - |
               # Signal the status from cfn-init
             - '/opt/aws/bin/cfn-signal -e $? '
@@ -523,6 +530,7 @@ Resources:
             - '         --region '
             - !Ref 'AWS::Region'
             - |+
+
       SecurityGroupIds:
         - !Ref WebServerPublicSecurityGroup
       Tags:
@@ -530,7 +538,7 @@ Resources:
           Value: !Sub '${EnvironmentName} Public Web Server'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT5M
+        Timeout: PT15M
 
 Outputs:
 
