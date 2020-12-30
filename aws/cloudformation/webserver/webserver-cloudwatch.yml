@@ -132,9 +132,35 @@ Resources:
                 - ec2.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      ManagedPolicyArns:
-       -  arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
       Path: /
+      Policies:
+        - PolicyName: cloudwatch
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'cloudwatch:PutMetricData'
+                Resource: '*'
+        - PolicyName: cloudwatchlogs
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:DescribeLogGroups'
+                  - 'logs:DescribeLogStreams'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
+        - PolicyName: ec2
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:DescribeVolumes'
+                  - 'ec2:DescribeTags'                  
+                Resource: '*'
 
   WebServerInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
