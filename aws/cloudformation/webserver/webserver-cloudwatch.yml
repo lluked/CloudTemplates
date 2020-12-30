@@ -537,7 +537,7 @@ Resources:
           Value: !Sub '${EnvironmentName} Public Web Server'
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT15M
+        Timeout: PT5M
 
 Outputs:
 
