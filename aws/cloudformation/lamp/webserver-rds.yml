@@ -1,4 +1,4 @@
-Description: LAMP Stack. amzn2-ami-hvm-x86_64-gp2, httpd, mysql 8.0 rds db, php 7.3. Includes AWS CloudFormation PHP Sample index.php page.
+Description: LAMP Stack. amzn2-ami-hvm-x86_64-gp2, httpd, mysql 8.0 rds db, php 7.3.
 
 Parameters:
 
@@ -204,7 +204,7 @@ Resources:
         - Key: Name
           Value: !Sub '${EnvironmentName} RDS Private Subnet Group'
 
-  PublicWebServerSecurityGroup:
+  WebServerPublicSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupName: web-server-ingress-sg
@@ -223,20 +223,72 @@ Resources:
         - Key: Name
           Value: !Sub '${EnvironmentName} Public Web Server Security Group'
 
-  PublicWebServerInstance:
+  WebServerInstance:
     Type: 'AWS::EC2::Instance'
     Metadata:
       'AWS::CloudFormation::Init':
         configSets:
           setup:
-            - prepare
-            - install
-        prepare:
+            - configure-cfn-hup
+            - amazon-linux-extras
+            - install-frontend
+          update:
+            - install-frontend
+        configure-cfn-hup:
+          files:
+            /etc/cfn/cfn-hup.conf:
+              content: !Join 
+                - ''
+                - - |
+                    [main]
+                  - stack=
+                  - !Ref 'AWS::StackId'
+                  - |+
+
+                  - region=
+                  - !Ref 'AWS::Region'
+                  - |+
+
+              mode: '000400'
+              owner: root
+              group: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Join 
+                - ''
+                - - |
+                    [cfn-auto-reloader-hook]
+                  - |
+                    triggers=post.update
+                  - >
+                    path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+                  - 'action=/opt/aws/bin/cfn-init -v '
+                  - '         --stack '
+                  - !Ref 'AWS::StackName'
+                  - '         --resource WebServerInstance '
+                  - '         --configsets update '
+                  - '         --region '
+                  - !Ref 'AWS::Region'
+                  - |+
+
+                  - |
+                    runas=root
+              mode: '000400'
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+        amazon-linux-extras:
           commands:
             ale_php73:
               command: "amazon-linux-extras enable php7.3"
               cwd: "~"
-        install:
+        install-frontend:
           packages:
             yum:
               httpd: []
@@ -330,7 +382,7 @@ Resources:
                           }
                   - '      $Database     = "'
                   - !GetAtt 
-                    - PrivateDBInstance
+                    - DBInstance
                     - Endpoint.Address
                   - |
                     ";
@@ -371,55 +423,11 @@ Resources:
               mode: '000600'
               owner: apache
               group: apache
-            /etc/cfn/cfn-hup.conf:
-              content: !Join 
-                - ''
-                - - |
-                    [main]
-                  - stack=
-                  - !Ref 'AWS::StackId'
-                  - |+
-
-                  - region=
-                  - !Ref 'AWS::Region'
-                  - |+
-
-              mode: '000400'
-              owner: root
-              group: root
-            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Join 
-                - ''
-                - - |
-                    [cfn-auto-reloader-hook]
-                  - |
-                    triggers=post.update
-                  - >
-                    path=Resources.PublicWebServerInstance.Metadata.AWS::CloudFormation::Init
-                  - 'action=/opt/aws/bin/cfn-init -v '
-                  - '         --stack '
-                  - !Ref 'AWS::StackName'
-                  - '         --resource PublicWebServerInstance '
-                  - '         --region '
-                  - !Ref 'AWS::Region'
-                  - |+
-
-                  - |
-                    runas=root
-              mode: '000400'
-              owner: root
-              group: root
           services:
             sysvinit:
               httpd:
                 enabled: 'true'
                 ensureRunning: 'true'
-              cfn-hup:
-                enabled: 'true'
-                ensureRunning: 'true'
-                files:
-                  - /etc/cfn/cfn-hup.conf
-                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
     Properties:
       ImageId: !Ref LatestAmiId
       InstanceType: !Ref WebServerInstanceType
@@ -437,7 +445,7 @@ Resources:
             - '/opt/aws/bin/cfn-init -v '
             - '         --stack '
             - !Ref 'AWS::StackName'
-            - '         --resource PublicWebServerInstance '
+            - '         --resource WebServerInstance '
             - '         --configsets setup '
             - '         --region '
             - !Ref 'AWS::Region'
@@ -448,13 +456,13 @@ Resources:
             - '/opt/aws/bin/cfn-signal -e $? '
             - '         --stack '
             - !Ref 'AWS::StackName'
-            - '         --resource PublicWebServerInstance '
+            - '         --resource WebServerInstance '
             - '         --region '
             - !Ref 'AWS::Region'
             - |+
 
       SecurityGroupIds:
-        - !Ref PublicWebServerSecurityGroup
+        - !Ref WebServerPublicSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub '${EnvironmentName} Public Web Server'
@@ -462,7 +470,7 @@ Resources:
       ResourceSignal:
         Timeout: PT5M
 
-  PrivateDBSecurityGroup:
+  DBSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupName: database-sg
@@ -472,12 +480,12 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 33306
-          SourceSecurityGroupId: !GetAtt PublicWebServerSecurityGroup.GroupId
+          SourceSecurityGroupId: !GetAtt WebServerPublicSecurityGroup.GroupId
       Tags:
         - Key: Name
           Value: !Sub '${EnvironmentName} Private Database Security Group'
 
-  PrivateDBInstance:
+  DBInstance:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       AllocatedStorage: !Ref DBAllocatedStorage
@@ -502,7 +510,7 @@ Resources:
       MasterUserPassword: !Ref DBPassword
       PubliclyAccessible: no
       VPCSecurityGroups:
-       - !Ref PrivateDBSecurityGroup  
+       - !Ref DBSecurityGroup  
       Tags:
         - Key: Name
           Value: !Sub '${EnvironmentName} Private Database Instance'
@@ -525,13 +533,13 @@ Outputs:
     Description: A reference to the private subnet in the 2nd Availability Zone.
     Value: !Ref PrivateSubnet2
 
-  PublicWebServerSecurityGroup:
+  WebServerPublicSecurityGroup:
     Description: Security group for webserver.
-    Value: !Ref PublicWebServerSecurityGroup
+    Value: !Ref WebServerPublicSecurityGroup
 
-  PrivateDBSecurityGroup:
+  DBSecurityGroup:
     Description: Security group for db.
-    Value: !Ref PrivateDBSecurityGroup
+    Value: !Ref DBSecurityGroup
 
   DBInstanceId:
     Description: InstanceId of the newly created RDS Instance.
@@ -543,7 +551,7 @@ Outputs:
       - ''
       - - 'http://'
         - !GetAtt 
-          - PublicWebServerInstance
+          - WebServerInstance
           - PublicDnsName
 
   PrivateDBAddress:
@@ -551,5 +559,5 @@ Outputs:
     Value: !Join 
       - ''
       - - !GetAtt 
-          - PrivateDBInstance
+          - DBInstance
           - Endpoint.Address
