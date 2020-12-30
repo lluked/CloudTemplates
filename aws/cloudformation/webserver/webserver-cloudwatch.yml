@@ -156,7 +156,6 @@ Resources:
             - amazon-linux-extras
             - install-frontend
           update:
-            - configure-cfn-hup
             - configure-cloudwatch-agent
             - restart-cloudwatch-agent
         configure-cfn-hup:
