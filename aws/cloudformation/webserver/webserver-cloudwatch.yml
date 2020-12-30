@@ -118,13 +118,6 @@ Resources:
         - Key: Name
           Value: !Sub '${EnvironmentName} Public Web Server Security Group'
 
-  WebServerInstanceProfile:
-    Type: 'AWS::IAM::InstanceProfile'
-    Properties:
-      Path: /
-      Roles:
-        - !Ref WebServerInstanceRole
-
   WebServerInstanceRole:
     Type: 'AWS::IAM::Role'
     Properties:
