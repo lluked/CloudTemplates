@@ -1,5 +1,7 @@
 Description: lamp Stack. amzn2-ami-hvm-x86_64-gp2, httpd, mysql 8.0 rds db, php 7.3. cloudwatch logging.
 
+Parameters:
+
   EnvironmentName:
     Description: An environment name that is prefixed to resource names.
     Type: String
