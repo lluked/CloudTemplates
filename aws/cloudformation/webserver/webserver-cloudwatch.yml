@@ -1,3 +1,5 @@
+Description: amzn2-ami-hvm-x86_64-gp2, httpd, php 7.3, cloudwatch agent.
+
 Parameters:
 
   EnvironmentName:
