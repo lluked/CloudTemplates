@@ -371,9 +371,9 @@ Resources:
                 }
         restart-cloudwatch-agent:
           commands:
-            stop_cloudwatch:
+            01_stop_cloudwatch:
               command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
-            start_cloudwatch:
+            02_start_cloudwatch:
               command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
         amazon-linux-extras:
           commands:
