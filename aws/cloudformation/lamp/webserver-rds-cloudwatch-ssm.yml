@@ -191,7 +191,7 @@ Resources:
   DBSubnetGroup:
     Type: 'AWS::RDS::DBSubnetGroup'
     Properties:
-      DBSubnetGroupDescription: description
+      DBSubnetGroupDescription: Security group for db access.
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
@@ -547,7 +547,7 @@ Resources:
         - !Ref WebServerPublicSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName} Public Web Server'
+          Value: !Sub '${AWS::StackName} Public Web Server Instance'
     CreationPolicy:
       ResourceSignal:
         Timeout: PT5M
@@ -573,16 +573,8 @@ Resources:
       AllocatedStorage: !Ref DBAllocatedStorage
       DBInstanceIdentifier: !Join 
         - '-'
-        - - !Ref DBInstanceID
-          - !Select
-            - 0
-            - !Split
-              - "-"
-              - !Select
-                - 2
-                - !Split
-                  - "/"
-                  - !Ref "AWS::StackId"
+        - - !Sub ${AWS::StackName}
+          - !Ref DBInstanceID
       DBName: !Ref DBName
       DBSubnetGroupName: !Ref DBSubnetGroup
       DBInstanceClass: !Ref DBInstanceClass
