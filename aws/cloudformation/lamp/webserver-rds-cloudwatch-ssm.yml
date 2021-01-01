@@ -2,11 +2,6 @@ Description: lamp Stack. amzn2-ami-hvm-x86_64-gp2, httpd, mysql 8.0 rds db, php 
 
 Parameters:
 
-  EnvironmentName:
-    Description: An environment name that is prefixed to resource names.
-    Type: String
-    Default: LAMP
-
   VPCCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC.
     Type: String
@@ -114,7 +109,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Internet Gateway'
+          Value: !Sub '${AWS::StackName} Internet Gateway'
 
   InternetGatewayAttachment:
     Type: 'AWS::EC2::VPCGatewayAttachment'
@@ -130,7 +125,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} VPC'
+          Value: !Sub '${AWS::StackName} VPC'
 
   DefaultPublicRoute:
     Type: 'AWS::EC2::Route'
@@ -146,7 +141,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Routes'
+          Value: !Sub '${AWS::StackName} Public Routes'
 
   PublicSubnetRouteTableAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
@@ -165,7 +160,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Subnet'
+          Value: !Sub '${AWS::StackName} Public Subnet'
 
   PrivateSubnet1:
     Type: 'AWS::EC2::Subnet'
@@ -178,7 +173,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Private Subnet (AZ1)'
+          Value: !Sub '${AWS::StackName} Private Subnet (AZ1)'
 
   PrivateSubnet2:
     Type: 'AWS::EC2::Subnet'
@@ -191,7 +186,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Private Subnet (AZ2)'
+          Value: !Sub '${AWS::StackName} Private Subnet (AZ2)'
 
   DBSubnetGroup:
     Type: 'AWS::RDS::DBSubnetGroup'
@@ -202,7 +197,7 @@ Resources:
         - !Ref PrivateSubnet2
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} RDS Private Subnet Group'
+          Value: !Sub '${AWS::StackName} RDS Private Subnet Group'
 
   WebServerPublicSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -221,159 +216,148 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Web Server Security Group'
+          Value: !Sub '${AWS::StackName} Web Server Public Security Group'
 
   CloudWatchAgentConfig:
     Type: AWS::SSM::Parameter
     Properties: 
       DataType: text
       Description: json configuration for cloud Watch agent.
-      Name: !Join 
-        - '-'
-        - - 'AmazonCloudWatch'
-          - 'AgentConfig'
-          - !Select
-            - 0
-            - !Split
-              - "-"
-              - !Select
-                - 2
-                - !Split
-                  - "/"
-                  - !Ref "AWS::StackId"
+      Name: !Sub 'AmazonCloudWatch-${AWS::StackName}-AgentConfig'
       Tier: Standard
       Type: String
-      Value: '{
-                "agent": {
-                  "metrics_collection_interval": 60,
-                  "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
-                },
-                "logs": {
-                  "logs_collected": {
-                    "files": {
-                      "collect_list": [
-                        {
-                        "file_path": "/var/log/amazon/amazon-cloudwatch-agent/amazon-cloudwatch-agent.log",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-amazon-cloudwatch-agent",
-                        "timezone": "UTC"
-                        },
-                        {
-                        "file_path": "/var/log/messages",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-message",
-                        "timezone": "UTC"
-                        },
-                        {
-                        "file_path": "/var/log/cron",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-cron",
-                        "timezone": "UTC"
-                        },
-                        {
-                        "file_path": "/var/log/yum.log",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-yum",
-                        "timezone": "UTC"
-                        },
-                        {
-                        "file_path": "/var/log/secure",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-secure",
-                        "timezone": "UTC"
-                        },
-                        {
-                        "file_path": "/var/log/httpd/access_log",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-apache-access",
-                        "timezone": "UTC"
-                        },
-                        {
-                        "file_path": "/var/log/httpd/error_log",
-                        "log_group_name": "{instance_id}",
-                        "log_stream_name": "{hostname}-apache-error",
-                        "timezone": "UTC"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "metrics": {
-                  "append_dimensions": {
-                    "AutoScalingGroupName": "${!aws:AutoScalingGroupName}",
-                    "ImageId": "${!aws:ImageId}",
-                    "InstanceId": "${!aws:InstanceId}",
-                    "InstanceType": "${!aws:InstanceType}"
+      Value: !Sub |
+        {
+          "agent": {
+            "metrics_collection_interval": 60,
+            "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log"
+          },
+          "logs": {
+            "logs_collected": {
+              "files": {
+                "collect_list": [
+                  {
+                    "file_path": "/var/log/amazon/amazon-cloudwatch-agent/amazon-cloudwatch-agent.log",
+                    "log_group_name": "amazon-cloudwatch-agent-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
                   },
-                  "metrics_collected": {
-                    "cpu": {
-                      "measurement": [
-                        "cpu_usage_idle",
-                        "cpu_usage_nice"
-                      ],
-                    "metrics_collection_interval": 60,
-                    "resources": [
-                      "*"
-                    ],
-                    "totalcpu": false
-                    },
-                    "disk": {
-                      "measurement": [
-                        "used_percent",
-                        "total"
-                      ],
-                      "metrics_collection_interval": 60,
-                      "resources": [
-                        "*"
-                      ]
-                    },
-                    "diskio": {
-                      "measurement": [
-                        "write_bytes",
-                        "read_bytes",
-                        "writes",
-                        "reads"
-                      ],
-                      "metrics_collection_interval": 60,
-                      "resources": [
-                        "*"
-                      ]
-                    },
-                    "mem": {
-                      "measurement": [
-                        "mem_total",
-                        "mem_used_percent"
-                      ],
-                      "metrics_collection_interval": 60
-                    },
-                    "net": {
-                      "measurement": [
-                        "bytes_sent",
-                        "bytes_recv",
-                        "packets_sent",
-                        "packets_recv"
-                      ],
-                      "metrics_collection_interval": 60,
-                      "resources": [
-                        "*"
-                      ]
-                    },
-                    "swap": {
-                      "measurement": [
-                        "swap_free",
-                        "swap_used",
-                        "swap_used_percent"
-                      ],
-                      "metrics_collection_interval": 60
-                    }
+                  {
+                    "file_path": "/var/log/messages",
+                    "log_group_name": "message-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
+                  },
+                  {
+                    "file_path": "/var/log/cron",
+                    "log_group_name": "cron-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
+                  },
+                  {
+                    "file_path": "/var/log/yum.log",
+                    "log_group_name": "yum-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
+                  },
+                  {
+                    "file_path": "/var/log/secure",
+                    "log_group_name": "secure-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
+                  },
+                  {
+                    "file_path": "/var/log/httpd/access_log",
+                    "log_group_name": "httpd_access-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
+                  },
+                  {
+                    "file_path": "/var/log/httpd/error_log",
+                    "log_group_name": "httpd_error-logs",
+                    "log_stream_name": "${AWS::StackName}-{instance_id}",
+                    "timezone": "UTC"
                   }
-                }
-              }'
+                ]
+              }
+            }
+          },
+          "metrics": {
+            "append_dimensions": {
+              "AutoScalingGroupName": "${!aws:AutoScalingGroupName}",
+              "ImageId": "${!aws:ImageId}",
+              "InstanceId": "${!aws:InstanceId}",
+              "InstanceType": "${!aws:InstanceType}"
+            },
+            "metrics_collected": {
+              "cpu": {
+                "measurement": [
+                  "cpu_usage_idle",
+                  "cpu_usage_nice"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ],
+                "totalcpu": false
+              },
+              "disk": {
+                "measurement": [
+                  "used_percent",
+                  "total"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ]
+              },
+              "diskio": {
+                "measurement": [
+                  "write_bytes",
+                  "read_bytes",
+                  "writes",
+                  "reads"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ]
+              },
+              "mem": {
+                "measurement": [
+                  "mem_total",
+                  "mem_used_percent"
+                ],
+                "metrics_collection_interval": 60
+              },
+              "net": {
+                "measurement": [
+                  "bytes_sent",
+                  "bytes_recv",
+                  "packets_sent",
+                  "packets_recv"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ]
+              },
+              "swap": {
+                "measurement": [
+                  "swap_free",
+                  "swap_used",
+                  "swap_used_percent"
+                ],
+                "metrics_collection_interval": 60
+              }
+            }
+          }
+        }
 
   WebServerInstanceRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub 'WebServerInstanceRole-EC2-${AWS::StackName}'
+      RoleName: !Sub '${AWS::StackName}-WebServerInstanceRole'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -389,6 +373,7 @@ Resources:
   WebServerInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
+      InstanceProfileName: !Sub '${AWS::StackName}-WebServerInstanceProfile'
       Path: /
       Roles:
         - !Ref WebServerInstanceRole
@@ -413,41 +398,20 @@ Resources:
         configure-cfn-hup:
           files:
             /etc/cfn/cfn-hup.conf:
-              content: !Join 
-                - ''
-                - - |
-                    [main]
-                  - stack=
-                  - !Ref 'AWS::StackId'
-                  - |+
-
-                  - region=
-                  - !Ref 'AWS::Region'
-                  - |+
-
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
               mode: '000400'
               owner: root
               group: root
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Join 
-                - ''
-                - - |
-                    [cfn-auto-reloader-hook]
-                  - |
-                    triggers=post.update
-                  - >
-                    path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
-                  - 'action=/opt/aws/bin/cfn-init -v '
-                  - '         --stack '
-                  - !Ref 'AWS::StackName'
-                  - '         --resource WebServerInstance '
-                  - '         --configsets update '
-                  - '         --region '
-                  - !Ref 'AWS::Region'
-                  - |+
-
-                  - |
-                    runas=root
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --configsets update --region ${AWS::Region}
+                runas=root
               mode: '000400'
               owner: root
               group: root
@@ -466,19 +430,18 @@ Resources:
         configure-cloudwatch-agent:
           files:
             '/opt/aws/amazon-cloudwatch-agent/etc/dummy.version':
-              content: !Sub |
-                "Dummy file to manually pull config from ssm after update."
+              content: |
+                "Dummy file - Modify to pull config from ssm after update of stack."
                 "VERSION=1.0"
         restart-cloudwatch-agent:
           commands:
             01_stop_cloudwatch:
               command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
             02_start_cloudwatch:
-              command:
-                Fn::Sub:
+              command: !Sub
                   - |
-                    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${ssmkey} -s
-                  - { ssmkey: !Ref CloudWatchAgentConfig }
+                    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${agentconfig} -s
+                  - agentconfig: !Ref CloudWatchAgentConfig
         amazon-linux-extras:
           commands:
             ale_php73:
@@ -493,130 +456,70 @@ Resources:
         install-site:
           files:
             /var/www/html/index.php:
-              content: !Join 
-                - ''
-                - - |
-                    <html>
-                  - |2
-                      <head>
-                  - |2
-                        <title>AWS CloudFormation PHP Sample</title>
-                  - |2
-                        <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-                  - |2
-                      </head>
-                  - |2
-                      <body>
-                  - |2
-                        <h1>Welcome to the AWS CloudFormation PHP Sample</h1>
-                  - |2
-                        <p/>
-                  - |2
-                        <?php
-                  - |2
-                          // Print out the current data and time
-                  - |2
-                          print "The Current Date and Time is: <br/>";
-                  - |2
-                          print date("g:i A l, F j Y.");
-                  - |2
-                        ?>
-                  - |2
-                        <p/>
-                  - |2
-                        <?php
-                  - |2
-                          // Setup a handle for CURL
-                  - |2
-                          $curl_handle=curl_init();
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_CONNECTTIMEOUT,2);
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
-                  - |2
-                          // Get the hostname of the intance from the instance metadata
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/public-hostname');
-                  - |2
-                          $hostname = curl_exec($curl_handle);
-                  - |2
-                          if (empty($hostname))
-                  - |2
-                          {
-                  - |2
-                            print "Sorry, for some reason, we got no hostname back <br />";
-                  - |2
-                          }
-                  - |2
-                          else
-                  - |2
-                          {
-                  - |2
-                            print "Server = " . $hostname . "<br />";
-                  - |2
-                          }
-                  - |2
-                          // Get the instance-id of the intance from the instance metadata
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/instance-id');
-                  - |2
-                          $instanceid = curl_exec($curl_handle);
-                  - |2
-                          if (empty($instanceid))
-                  - |2
-                          {
-                  - |2
-                            print "Sorry, for some reason, we got no instance id back <br />";
-                  - |2
-                          }
-                  - |2
-                          else
-                  - |2
-                          {
-                  - |2
-                            print "EC2 instance-id = " . $instanceid . "<br />";
-                  - |2
-                          }
-                  - '      $Database     = "'
-                  - !GetAtt 
+              content: !Sub 
+                - |
+                  <html>
+                    <head>
+                      <title>AWS CloudFormation PHP Sample</title>
+                      <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+                    </head>
+                    <body>
+                      <h1>Welcome to the AWS CloudFormation PHP Sample</h1>
+                      <p/>
+                      <?php
+                        // Print out the current data and time
+                        print "The Current Date and Time is: <br/>";
+                        print date("g:i A l, F j Y.");
+                      ?>
+                      <p/>
+                      <?php
+                        // Setup a handle for CURL
+                        $curl_handle=curl_init();
+                        curl_setopt($curl_handle,CURLOPT_CONNECTTIMEOUT,2);
+                        curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
+                        // Get the hostname of the intance from the instance metadata
+                        curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/public-hostname');
+                        $hostname = curl_exec($curl_handle);
+                        if (empty($hostname))
+                        {
+                          print "Sorry, for some reason, we got no hostname back <br />";
+                        }
+                        else
+                        {
+                          print "Server = " . $hostname . "<br />";
+                        }
+                        // Get the instance-id of the intance from the instance metadata
+                        curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/instance-id');
+                        $instanceid = curl_exec($curl_handle);
+                        if (empty($instanceid))
+                        {
+                          print "Sorry, for some reason, we got no instance id back <br />";
+                        }
+                        else
+                        {
+                          print "EC2 instance-id = " . $instanceid . "<br />";
+                        }
+                        $Database   = "${dbdatabase}";
+                        $DBUser     = "${dbuser}" ;
+                        $DBPassword = "${dbpassword}";
+                        print "Database = " . $Database . "<br />";
+                        $dbconnection = mysqli_connect($Database, $DBUser, $DBPassword)
+                                        or die("Could not connect: " . mysql_error());
+                        print ("Connected to $Database successfully");
+                        mysqli_close($dbconnection);
+                      ?>
+                      <h2>PHP Information</h2>
+                      <p/>
+                      <?php
+                        phpinfo();
+                      ?>
+                    </body>
+                  </html>
+                - dbdatabase: !GetAtt
                     - DBInstance
                     - Endpoint.Address
-                  - |
-                    ";
-                  - '      $DBUser     = "'
-                  - !Ref DBUsername
-                  - |
-                    ";
-                  - '      $DBPassword = "'
-                  - !Ref DBPassword
-                  - |
-                    ";
-                  - |2
-                          print "Database = " . $Database . "<br />";
-                  - |2
-                          $dbconnection = mysqli_connect($Database, $DBUser, $DBPassword)
-                  - |2
-                                          or die("Could not connect: " . mysql_error());
-                  - |2
-                          print ("Connected to $Database successfully");
-                  - |2
-                          mysqli_close($dbconnection);
-                  - |2
-                        ?>
-                  - |2
-                        <h2>PHP Information</h2>
-                  - |2
-                        <p/>
-                  - |2
-                        <?php
-                  - |2
-                          phpinfo();
-                  - |2
-                        ?>
-                  - |2
-                      </body>
-                  - |
-                    </html>
+                  dbuser: !Ref DBUsername
+                  dbpassword: !Ref DBPassword
               mode: '000600'
               owner: apache
               group: apache
@@ -631,39 +534,20 @@ Resources:
       InstanceType: !Ref WebServerInstanceType
       SubnetId: !Ref PublicSubnet
       KeyName: !Ref KeyName
-      UserData: !Base64 
-        'Fn::Join':
-          - ''
-          - - |
-              #!/bin/bash -xe
-            - |
-              yum update -y aws-cfn-bootstrap
-            - |
-              # Install the files and packages from the metadata
-            - '/opt/aws/bin/cfn-init -v '
-            - '         --stack '
-            - !Ref 'AWS::StackName'
-            - '         --resource WebServerInstance '
-            - '         --configsets setup '
-            - '         --region '
-            - !Ref 'AWS::Region'
-            - |+
-
-            - |
-              # Signal the status from cfn-init
-            - '/opt/aws/bin/cfn-signal -e $? '
-            - '         --stack '
-            - !Ref 'AWS::StackName'
-            - '         --resource WebServerInstance '
-            - '         --region '
-            - !Ref 'AWS::Region'
-            - |+
-
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash -xe
+            yum update -y aws-cfn-bootstrap
+            # Install the files and packages from the metadata
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --configsets setup --region ${AWS::Region}
+            # Signal the status from cfn-init
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
       SecurityGroupIds:
         - !Ref WebServerPublicSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Web Server'
+          Value: !Sub '${AWS::StackName} Public Web Server'
     CreationPolicy:
       ResourceSignal:
         Timeout: PT5M
@@ -681,7 +565,7 @@ Resources:
           SourceSecurityGroupId: !GetAtt WebServerPublicSecurityGroup.GroupId
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Private Database Security Group'
+          Value: !Sub '${AWS::StackName} Private Database Security Group'
 
   DBInstance:
     Type: 'AWS::RDS::DBInstance'
@@ -711,7 +595,7 @@ Resources:
        - !Ref DBSecurityGroup  
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Private Database Instance'
+          Value: !Sub '${AWS::StackName} Private Database Instance'
 
 Outputs:
 
