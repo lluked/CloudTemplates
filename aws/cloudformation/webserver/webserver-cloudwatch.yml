@@ -1,12 +1,7 @@
 Description: amzn2-ami-hvm-x86_64-gp2, httpd, php 7.3, cloudwatch agent.
 
 Parameters:
-
-  EnvironmentName:
-    Description: An environment name that is prefixed to resource names.
-    Type: String
-    Default: WebServer
-  
+ 
   VPCCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC.
     Type: String
@@ -48,7 +43,7 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Internet Gateway'
+          Value: !Sub '${AWS::StackName} Internet Gateway'
 
   InternetGatewayAttachment:
     Type: 'AWS::EC2::VPCGatewayAttachment'
@@ -64,7 +59,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} VPC'
+          Value: !Sub '${AWS::StackName} VPC'
 
   DefaultPublicRoute:
     Type: 'AWS::EC2::Route'
@@ -80,7 +75,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Routes'
+          Value: !Sub '${AWS::StackName} Public Routes'
 
   PublicSubnetRouteTableAssociation:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
@@ -99,7 +94,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Subnet'
+          Value: !Sub '${AWS::StackName} Public Subnet'
 
   WebServerPublicSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -118,12 +113,12 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Web Server Security Group'
+          Value: !Sub '${AWS::StackName} Public Web Server Security Group'
 
   WebServerInstanceRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub 'WebServerInstanceRole-EC2-${AWS::StackName}'
+      RoleName: !Sub '${AWS::StackName}-WebServerInstanceRole'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -165,6 +160,7 @@ Resources:
   WebServerInstanceProfile:
     Type: 'AWS::IAM::InstanceProfile'
     Properties:
+      InstanceProfileName: !Sub '${AWS::StackName}-WebServerInstanceProfile'
       Path: /
       Roles:
         - !Ref WebServerInstanceRole
@@ -254,44 +250,44 @@ Resources:
                         "collect_list": [
                           {
                             "file_path": "/var/log/amazon/amazon-cloudwatch-agent/amazon-cloudwatch-agent.log",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-amazon-cloudwatch-agent",
+                            "log_group_name": "amazon-cloudwatch-agent-logs",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
                             "file_path": "/var/log/messages",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-message",
+                            "log_group_name": "message-logs",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
                             "file_path": "/var/log/cron",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-cron",
+                            "log_group_name": "cron-logs",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
                             "file_path": "/var/log/yum.log",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-yum",
+                            "log_group_name": "yum-logs",
+                            "log_stream_name": "${AWS::StackName}-${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
                             "file_path": "/var/log/secure",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-secure",
+                            "log_group_name": "secure-logs",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
                             "file_path": "/var/log/httpd/access_log",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-apache-access",
+                            "log_group_name": "httpd_access-logs",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
                             "file_path": "/var/log/httpd/error_log",
-                            "log_group_name": "{instance_id}",
-                            "log_stream_name": "{hostname}-apache-error",
+                            "log_group_name": "httpd_error-logs",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           }
                         ]
@@ -534,7 +530,7 @@ Resources:
         - !Ref WebServerPublicSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub '${EnvironmentName} Public Web Server'
+          Value: !Sub '${AWS::StackName} Public Web Server'
     CreationPolicy:
       ResourceSignal:
         Timeout: PT5M
