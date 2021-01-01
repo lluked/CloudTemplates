@@ -436,7 +436,6 @@ Resources:
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --configsets setup --region ${AWS::Region}
             # Signal the status from cfn-init
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
-
       SecurityGroupIds:
         - !Ref WebServerPublicSecurityGroup
       Tags:
