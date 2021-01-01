@@ -185,7 +185,6 @@ Resources:
         configure-cfn-hup:
           files:
             /etc/cfn/cfn-hup.conf:
-              content: !Join 
               content: !Sub |
                 [main]
                 stack=${AWS::StackId}
@@ -194,7 +193,6 @@ Resources:
               owner: root
               group: root
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Join 
               content: !Sub |
                 [cfn-auto-reloader-hook]
                 triggers=post.update
