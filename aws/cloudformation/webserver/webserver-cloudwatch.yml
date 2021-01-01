@@ -186,40 +186,21 @@ Resources:
           files:
             /etc/cfn/cfn-hup.conf:
               content: !Join 
-                - ''
-                - - |
-                    [main]
-                  - stack=
-                  - !Ref 'AWS::StackId'
-                  - |+
-
-                  - region=
-                  - !Ref 'AWS::Region'
-                  - |+
-
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
               mode: '000400'
               owner: root
               group: root
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
               content: !Join 
-                - ''
-                - - |
-                    [cfn-auto-reloader-hook]
-                  - |
-                    triggers=post.update
-                  - >
-                    path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
-                  - 'action=/opt/aws/bin/cfn-init -v '
-                  - '         --stack '
-                  - !Ref 'AWS::StackName'
-                  - '         --resource WebServerInstance '
-                  - '         --configsets update '
-                  - '         --region '
-                  - !Ref 'AWS::Region'
-                  - |+
-
-                  - |
-                    runas=root
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --configsets update --region ${AWS::Region}
+                runas=root
               mode: '000400'
               owner: root
               group: root
@@ -384,106 +365,56 @@ Resources:
         install-site:
           files:
             /var/www/html/index.php:
-              content: !Join 
-                - ''
-                - - |
-                    <html>
-                  - |2
-                      <head>
-                  - |2
-                        <title>AWS CloudFormation PHP Sample</title>
-                  - |2
-                        <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-                  - |2
-                      </head>
-                  - |2
-                      <body>
-                  - |2
-                        <h1>Welcome to the AWS CloudFormation PHP Sample</h1>
-                  - |2
-                        <p/>
-                  - |2
-                        <?php
-                  - |2
-                          // Print out the current data and tie
-                  - |2
-                          print "The Current Date and Time is: <br/>";
-                  - |2
-                          print date("g:i A l, F j Y.");
-                  - |2
-                        ?>
-                  - |2
-                        <p/>
-                  - |2
-                        <?php
-                  - |2
-                          // Setup a handle for CURL
-                  - |2
-                          $curl_handle=curl_init();
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_CONNECTTIMEOUT,2);
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
-                  - |2
-                          // Get the hostname of the intance from the instance metadata
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/public-hostname');
-                  - |2
-                          $hostname = curl_exec($curl_handle);
-                  - |2
-                          if (empty($hostname))
-                  - |2
-                          {
-                  - |2
-                            print "Sorry, for some reason, we got no hostname back <br />";
-                  - |2
-                          }
-                  - |2
-                          else
-                  - |2
-                          {
-                  - |2
-                            print "Server = " . $hostname . "<br />";
-                  - |2
-                          }
-                  - |2
-                          // Get the instance-id of the intance from the instance metadata
-                  - |2
-                          curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/instance-id');
-                  - |2
-                          $instanceid = curl_exec($curl_handle);
-                  - |2
-                          if (empty($instanceid))
-                  - |2
-                          {
-                  - |2
-                            print "Sorry, for some reason, we got no instance id back <br />";
-                  - |2
-                          }
-                  - |2
-                          else
-                  - |2
-                          {
-                  - |2
-                            print "EC2 instance-id = " . $instanceid . "<br />";
-                  - |2
-                          }
-                  - |2
-                        ?>
-                  - |2
-                        <h2>PHP Information</h2>
-                  - |2
-                        <p/>
-                  - |2
-                        <?php
-                  - |2
-                          phpinfo();
-                  - |2
-                        ?>
-                  - |2
-                      </body>
-                  - |
-                    </html>
+              content: |
+                <html>
+                  <head>
+                    <title>AWS CloudFormation PHP Sample</title>
+                    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+                  </head>
+                  <body>
+                    <h1>Welcome to the AWS CloudFormation PHP Sample</h1>
+                    <p/>
+                    <?php
+                      // Print out the current data and tie
+                      print "The Current Date and Time is: <br/>";
+                      print date("g:i A l, F j Y.");
+                    ?>
+                    <p/>
+                    <?php
+                      // Setup a handle for CURL
+                      $curl_handle=curl_init();
+                      curl_setopt($curl_handle,CURLOPT_CONNECTTIMEOUT,2);
+                      curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
+                      // Get the hostname of the intance from the instance metadata
+                      curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/public-hostname');
+                      $hostname = curl_exec($curl_handle);
+                      if (empty($hostname))
+                      {
+                        print "Sorry, for some reason, we got no hostname back <br />";
+                      }
+                      else
+                      {
+                        print "Server = " . $hostname . "<br />";
+                      }
+                      // Get the instance-id of the intance from the instance metadata
+                      curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/instance-id');
+                      $instanceid = curl_exec($curl_handle);
+                      if (empty($instanceid))
+                      {
+                        print "Sorry, for some reason, we got no instance id back <br />";
+                      }
+                      else
+                      {
+                        print "EC2 instance-id = " . $instanceid . "<br />";
+                      }
+                    ?>
+                    <h2>PHP Information</h2>
+                    <p/>
+                    <?php
+                      phpinfo();
+                    ?>
+                  </body>
+                </html>
               mode: '000600'
               owner: apache
               group: apache
@@ -498,39 +429,21 @@ Resources:
       InstanceType: !Ref WebServerInstanceType
       SubnetId: !Ref PublicSubnet
       KeyName: !Ref KeyName
-      UserData: !Base64 
-        'Fn::Join':
-          - ''
-          - - |
-              #!/bin/bash -xe
-            - |
-              yum update -y aws-cfn-bootstrap
-            - |
-              # Install the files and packages from the metadata
-            - '/opt/aws/bin/cfn-init -v '
-            - '         --stack '
-            - !Ref 'AWS::StackName'
-            - '         --resource WebServerInstance '
-            - '         --configsets setup '
-            - '         --region '
-            - !Ref 'AWS::Region'
-            - |+
-
-            - |
-              # Signal the status from cfn-init
-            - '/opt/aws/bin/cfn-signal -e $? '
-            - '         --stack '
-            - !Ref 'AWS::StackName'
-            - '         --resource WebServerInstance '
-            - '         --region '
-            - !Ref 'AWS::Region'
-            - |+
+      UserData:
+        "Fn::Base64":
+          !Sub |
+            #!/bin/bash -xe
+            yum update -y aws-cfn-bootstrap
+            # Install the files and packages from the metadata
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --configsets setup --region ${AWS::Region}
+            # Signal the status from cfn-init
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
 
       SecurityGroupIds:
         - !Ref WebServerPublicSecurityGroup
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName} Public Web Server'
+          Value: !Sub '${AWS::StackName} Public Web Server Instance'
     CreationPolicy:
       ResourceSignal:
         Timeout: PT5M
