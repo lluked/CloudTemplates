@@ -250,7 +250,7 @@ Resources:
                           {
                             "file_path": "/var/log/yum.log",
                             "log_group_name": "yum-logs",
-                            "log_stream_name": "${AWS::StackName}-${AWS::StackName}-{instance_id}",
+                            "log_stream_name": "${AWS::StackName}-{instance_id}",
                             "timezone": "UTC"
                           },
                           {
