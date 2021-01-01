@@ -191,7 +191,7 @@ Resources:
   DBSubnetGroup:
     Type: 'AWS::RDS::DBSubnetGroup'
     Properties:
-      DBSubnetGroupDescription: Security group for db access.
+      DBSubnetGroupDescription: Subnet group for db.
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
