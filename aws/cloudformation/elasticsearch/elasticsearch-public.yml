@@ -1,0 +1,82 @@
+Description: elasticsearch basic public deployment.
+
+Parameters:
+
+  ElasticsearchVersion:
+    Description: The version of Elasticsearch to use.
+    Type: String
+    AllowedValues:
+      - '6.8'
+      - '7.9'
+    Default: 7.9
+
+  InstanceType:
+    Type: String
+    Description: The instance type for your data nodes.
+    Default: t3.small.elasticsearch
+
+  NumberOfInstances:
+    Type: String
+    Description: The number of nodes (instances) to use in the Amazon ES domain.
+    Default: 1
+
+  MasterUser:
+    Type: String
+    Default: es-user
+
+  MasterPassword:
+    Description: The master user password must contain at least one uppercase letter, one lowercase letter, one number, and one special character. 
+    Type: String
+
+  ElasticsearchAccessCIDR:
+    Description: Please enter the IP range (CIDR notation) for remote access to the ES domain.
+    Type: String
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: Must be a valid IP CIDR range of the form x.x.x.x/x.
+
+Resources:
+
+  ElasticSearchDomain:
+    Type: AWS::Elasticsearch::Domain
+    UpdatePolicy:
+       EnableVersionUpgrade: true
+    Properties:
+      AdvancedSecurityOptions: 
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions: 
+          MasterUserName: !Ref MasterUser
+          MasterUserPassword: !Ref MasterPassword
+      DomainName: !Sub ${AWS::StackName}
+      ElasticsearchClusterConfig:
+        InstanceCount: !Ref NumberOfInstances
+        InstanceType: !Ref InstanceType
+      ElasticsearchVersion: !Ref ElasticsearchVersion
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 10
+        VolumeType: gp2
+      AccessPolicies:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: !Join
+              - ''
+              - - !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/' 
+                - !Sub ${AWS::StackName}
+                - '/*'
+            Condition:
+              IpAddress:
+                aws:SourceIp: !Ref ElasticsearchAccessCIDR
+      DomainEndpointOptions:
+        EnforceHTTPS: true
+      EncryptionAtRestOptions:
+        Enabled: true
+      NodeToNodeEncryptionOptions:
+        Enabled: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName} Elastic Search Domain'
