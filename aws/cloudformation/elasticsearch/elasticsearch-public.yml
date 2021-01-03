@@ -2,6 +2,12 @@ Description: elasticsearch basic public deployment.
 
 Parameters:
 
+  ElasticsearchDomainName:
+    Type: String
+    AllowedPattern: '[a-z][a-z0-9\-]+'
+    Description: 'Must satisfy regular expression pattern: [a-z][a-z0-9\-]+'
+    Default: elasticsearch
+
   ElasticsearchVersion:
     Description: The version of Elasticsearch to use.
     Type: String
@@ -21,10 +27,12 @@ Parameters:
     Default: 1
 
   MasterUser:
+    Description: The master username. 
     Type: String
     Default: es-user
 
   MasterPassword:
+    NoEcho: true
     Description: The master user password must contain at least one uppercase letter, one lowercase letter, one number, and one special character. 
     Type: String
 
@@ -47,7 +55,7 @@ Resources:
         MasterUserOptions: 
           MasterUserName: !Ref MasterUser
           MasterUserPassword: !Ref MasterPassword
-      DomainName: !Sub ${AWS::StackName}
+      DomainName: !Ref ElasticsearchDomainName
       ElasticsearchClusterConfig:
         InstanceCount: !Ref NumberOfInstances
         InstanceType: !Ref InstanceType
@@ -59,15 +67,16 @@ Resources:
         VolumeType: gp2
       AccessPolicies:
         Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: "es:*"
+            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${ElasticsearchDomainName}/*'
           - Effect: Allow
             Principal:
               AWS: '*'
             Action: 'es:*'
-            Resource: !Join
-              - ''
-              - - !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/' 
-                - !Sub ${AWS::StackName}
-                - '/*'
+            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${ElasticsearchDomainName}/*'
             Condition:
               IpAddress:
                 aws:SourceIp: !Ref ElasticsearchAccessCIDR
