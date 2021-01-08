@@ -1,2 +1,2 @@
-# CloudTemplates
+# cloud-templates
 CloudTemplates
